@@ -1,17 +1,14 @@
 import librosa
 import numpy as np
 from tensorflow.keras.models import load_model
+import tkinter as tk
+from tkinter import messagebox
 
-# load model
-model = load_model('Music_Gnere_Classifier_TOGETHER.h5')
-
-x = input("Drag your file here:")
-AUDIO_PATH = x
 SAMPLE_RATE = 22050
 TRACK_DURATION = 30 # measured in seconds
 SAMPLES_PER_TRACK = SAMPLE_RATE * TRACK_DURATION
 
-def save_mfcc(num_mfcc=13, n_fft=2048, hop_length=512, num_segments=10):
+def save_mfcc(AUDIO_PATH, num_mfcc=13, n_fft=2048, hop_length=512, num_segments=10):
     
     samples_per_segment = int(SAMPLES_PER_TRACK / num_segments)
 
@@ -48,13 +45,39 @@ def predict(model, X):
 
     # get index with max value
     predicted_index = np.argmax(prediction, axis=1)[0]
-    
-    print("預測結果為: {}".format(target[predicted_index]))
+    prediction = format(target[predicted_index])
+    return prediction
+
+def OK():
+
+    AUDIO_PATH = format(entry.get())
+    prediction = save_mfcc(AUDIO_PATH=AUDIO_PATH)[..., np.newaxis][0]
+    msg = predict(model, prediction)
+    messagebox.showinfo(title="Genre", message="file :\n" + AUDIO_PATH + "\n\nGenre is : \n" + msg)
 
 if __name__ == "__main__":
 
-    # pick  sample to predict
-    prediction = save_mfcc()[..., np.newaxis][0]
+    # load model
+    model = load_model("Music_Gnere_Classifier_TOGETHER.h5")
+    
+    # 視窗
+    window = tk.Tk()
+    window.title('Music Genre Classifier')
+    window.geometry("500x300+500+200")
 
-    # predict sample
-    predict(model, prediction)
+    # 標示文字
+    label = tk.Label(window,
+                    text="Please enter your file path here:",
+                    font=("Arial", 20))
+    label.pack()
+
+    # 輸入欄位
+    entry = tk.Entry(window,    # 輸入欄位所在視窗
+                    width=50)   # 輸入欄位寬度
+    entry.pack()
+
+    # 按鈕
+    button = tk.Button(window, text="OK", command=OK)
+    button.pack()
+    
+    window.mainloop()
